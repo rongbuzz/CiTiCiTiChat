@@ -90,7 +90,7 @@ public class editProfile extends AppCompatActivity {
             }
         });
 
-        // update user profile info
+        // Add update user profile info
         submitBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -175,8 +175,8 @@ public class editProfile extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             //setting user profile data to firebase database
                             mRef.child("Users").child(User.getUid()).child("username").setValue(User.getDisplayName());
-                            mRef.child("Users").child(User.getUid()).child("photouri").setValue(User.getPhotoUrl().toString());
-                            mRef.child("Users").child(User.getUid()).child("uid").setValue(User.getUid().toString());
+                            mRef.child("Users").child(User.getUid()).child("photouri").setValue(User.getPhotoUrl().toString().trim());
+                            mRef.child("Users").child(User.getUid()).child("uid").setValue(User.getUid().toString().trim());
 
                             Toast.makeText(getApplicationContext(), " Profile Update Successful ", Toast.LENGTH_SHORT).show();
                         }
