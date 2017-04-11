@@ -112,7 +112,7 @@ public class editProfile extends AppCompatActivity {
             mStorage.child("UserPhoto").child(photoUri.getLastPathSegment()).putFile(photoUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    Toast.makeText(getApplicationContext(), "sucsessfully uploded ", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "successfully uploaded ", Toast.LENGTH_SHORT).show();
                 }
             });
         }
