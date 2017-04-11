@@ -18,6 +18,8 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -28,6 +30,7 @@ public class editProfile extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseDatabase mDatabase;
+    private DatabaseReference mRef;
     private StorageReference mStorage;
     private FirebaseUser User;
 
@@ -37,8 +40,8 @@ public class editProfile extends AppCompatActivity {
 
     int REQUEST_CODE = 1;
 
-    String PhotoDownloadUri ;
-    Uri photoUri;
+    private String PhotoDownloadUri ;
+    private Uri photoUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +52,7 @@ public class editProfile extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         mStorage = FirebaseStorage.getInstance().getReference();
         mDatabase = FirebaseDatabase.getInstance();
+        mRef = mDatabase.getReference();
         User = mAuth.getCurrentUser();
 
         //View initialization
@@ -63,11 +67,39 @@ public class editProfile extends AppCompatActivity {
         //imageButton
         addProImage = (ImageButton) findViewById(R.id.addProImg);
 
-        //request permission
+        // request permission
         requestPermission();
 
         // open gallery
         openGallery();
+
+        // delete mStorage data
+        deleteBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mStorage.child("UserPhoto").child(photoUri.getLastPathSegment()).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if(task.isSuccessful()){
+                            //photo replaced with default photo
+                            addProImage.setImageDrawable(getDrawable(R.mipmap.ic_launcher));
+                            Toast.makeText(getApplicationContext(), " Photo deleted Successfully ", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
+
+        // update user profile info
+        submitBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String Name =UsernameEt.getText().toString().trim();
+                String Photouri = PhotoDownloadUri;
+                // Calling method
+                updateUserProfileInfo(Name,Photouri);
+            }
+        });
 
     }//onCreate end here
 
@@ -82,10 +114,6 @@ public class editProfile extends AppCompatActivity {
                 startActivityForResult(galleryPickIntent,REQUEST_CODE);
             }
         });
-    }
-
-    private void addProInfoToDB(){
-        //Datadase design goes here
     }
 
     //request permittion
@@ -115,16 +143,45 @@ public class editProfile extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "successfully uploaded ", Toast.LENGTH_SHORT).show();
                 }
             });
+            mStorage.child("UserPhoto").child(photoUri.getLastPathSegment()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                @Override
+                public void onSuccess(Uri uri) {
+               PhotoDownloadUri = uri.toString();
+                }
+            });
         }
     }
 
-    //checking gallery permition
+    //checking gallery permission
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CODE && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             openGallery();
         }
+    }
+
+    //update user profile info name and photo
+    public void updateUserProfileInfo(String name, String photoUri){
+        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                .setDisplayName(name)
+                .setPhotoUri(Uri.parse(photoUri))
+                .build();
+
+        User.updateProfile(profileUpdates)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            //setting user profile data to firebase database
+                            mRef.child("Users").child(User.getUid()).child("username").setValue(User.getDisplayName());
+                            mRef.child("Users").child(User.getUid()).child("photouri").setValue(User.getPhotoUrl().toString());
+                            mRef.child("Users").child(User.getUid()).child("uid").setValue(User.getUid().toString());
+
+                            Toast.makeText(getApplicationContext(), " Profile Update Successful ", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
     }
 
 
