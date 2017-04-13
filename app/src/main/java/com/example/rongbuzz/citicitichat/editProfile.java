@@ -24,6 +24,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Picasso;
 
 public class editProfile extends AppCompatActivity {
 
@@ -66,7 +67,8 @@ public class editProfile extends AppCompatActivity {
         deleteBtn = (Button) findViewById(R.id.deleteBtn);
         //imageButton
         addProImage = (ImageButton) findViewById(R.id.addProImg);
-
+        //add photo on start
+        Picasso.with(getApplicationContext()).load(User.getPhotoUrl().toString()).into(addProImage);
         // request permission
         requestPermission();
 
@@ -77,16 +79,19 @@ public class editProfile extends AppCompatActivity {
         deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mStorage.child("UserPhoto").child(photoUri.getLastPathSegment()).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if(task.isSuccessful()){
-                            //photo replaced with default photo
-                            addProImage.setImageDrawable(getDrawable(R.mipmap.ic_launcher));
-                            Toast.makeText(getApplicationContext(), " Photo deleted Successfully ", Toast.LENGTH_SHORT).show();
+                if(User.getPhotoUrl().toString() == PhotoDownloadUri){
+                    mStorage.child("UserPhoto").child(photoUri.getLastPathSegment()).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if(task.isSuccessful()){
+                                //photo replaced with default photo
+                                addProImage.setImageDrawable(getDrawable(R.mipmap.ic_launcher));
+                                Toast.makeText(getApplicationContext(), " Photo deleted Successfully ", Toast.LENGTH_SHORT).show();
+                            }
                         }
-                    }
-                });
+                    });
+                }
+
             }
         });
 
@@ -102,6 +107,12 @@ public class editProfile extends AppCompatActivity {
         });
 
     }//onCreate end here
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+    }
 
     //method for open gallery
     private void openGallery(){
@@ -179,6 +190,8 @@ public class editProfile extends AppCompatActivity {
                             mRef.child("Users").child(User.getUid()).child("uid").setValue(User.getUid().toString().trim());
 
                             Toast.makeText(getApplicationContext(), " Profile Update Successful ", Toast.LENGTH_SHORT).show();
+                            // add photo to edit
+                            startActivity(new Intent(getApplicationContext(),MainActivity.class));
                         }
                     }
                 });
